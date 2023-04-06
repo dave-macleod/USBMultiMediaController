@@ -24,7 +24,7 @@ Credits:
 //components
 Encoder encKnob(7, 6);  // encoder knob
 const int encSwitch = 5; // pause/play button
-
+const int wakeSwitch = 8;
 // variables
 long encPrevRotationValue  = -999; 
 long encRotationValue = -999;
@@ -35,13 +35,21 @@ unsigned long encSwitchPressTime = 0;
 int debounce = 50;
 unsigned long LongPressThreshold = 500;
 
+int wakeSwitchState = 0;
+bool wakeSwitchPressed = false;
+bool debugOn = false;
+
 // initialise 
 void setup()
 {
   pinMode(encSwitch, INPUT_PULLUP);
+  pinMode(wakeSwitch, INPUT_PULLUP);
   Consumer.begin();
-//  Serial.begin(9600); //for debugging
-//  Serial.println("Serial monitor started");
+  if (debugOn)
+  {
+    Serial.begin(9600); //for debugging
+    Serial.println("Serial monitor started");
+  }
 }
 
 //main loop
@@ -82,6 +90,24 @@ void loop()
       Consumer.write(MEDIA_VOLUME_UP);
     }
     encPrevRotationValue = encRotationValue;
+  }
+
+  // do the buttonpress
+  wakeSwitchState = digitalRead(wakeSwitch);
+  if (wakeSwitchPressed && wakeSwitchState == HIGH)   // switch was pressed and now isn't
+  {
+    wakeSwitchPressed = false; 
+  }
+  if (!wakeSwitchPressed && wakeSwitchState ==LOW) //switch wasn't pressed and now is
+  {
+    if (debugOn)
+    {
+      Serial.println("Wake up");
+    }
+    wakeSwitchPressed = true;
+    Keyboard.press(KEY_LEFT_CTRL);
+    Keyboard.send();
+    Keyboard.releaseAll();
   }
   delay(debounce); // soften control response
 }
